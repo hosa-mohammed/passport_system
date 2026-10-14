@@ -1,7 +1,7 @@
 app_name = "passport_system"
 app_title = "Passport System"
-app_publisher = "cv site"
-app_description = "cv"
+app_publisher = "Hosa Mohammed"
+app_description = "نظام إصدار الجوازات"
 app_email = "gcfseaq@gmail.com"
 app_license = "mit"
 

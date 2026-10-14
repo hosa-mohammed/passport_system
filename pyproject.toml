@@ -1,9 +1,9 @@
 [project]
 name = "passport_system"
 authors = [
-    { name = "cv site", email = "gcfseaq@gmail.com"}
+    { name = "Hosa Mohammed", email = "gcfseaq@gmail.com"}
 ]
-description = "cv"
+description = "نظام إصدار الجوازات"
 requires-python = ">=3.14"
 readme = "README.md"
 dynamic = ["version"]
