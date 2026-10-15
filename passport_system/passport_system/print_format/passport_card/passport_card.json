@@ -1,0 +1,19 @@
+{
+	"doctype": "Print Format",
+	"name": "Passport Card",
+	"doc_type": "Passport Application",
+	"module": "Passport System",
+	"standard": "Yes",
+	"print_format_type": "Jinja",
+	"html": "",
+	"custom_format": 0,
+	"disabled": 0,
+	"font_size": 12,
+	"page_number": "Hide",
+	"margin_top": 0,
+	"margin_bottom": 0,
+	"margin_left": 0,
+	"margin_right": 0,
+	"page_size": "A6",
+	"orientation": "Landscape"
+}

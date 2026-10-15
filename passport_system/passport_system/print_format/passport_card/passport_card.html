@@ -1,0 +1,269 @@
+<style>
+    @page {
+        size: A6 landscape;
+        margin: 0;
+    }
+    
+    .passport-card {
+        width: 148mm;
+        height: 105mm;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px solid #1e3c72;
+        border-radius: 4mm;
+        padding: 4mm;
+        box-sizing: border-box;
+        font-family: 'Arial', 'Segoe UI', sans-serif;
+        position: relative;
+        overflow: hidden;
+        direction: rtl;
+    }
+    
+    .passport-header {
+        text-align: center;
+        border-bottom: 1px solid #1e3c72;
+        padding-bottom: 2mm;
+        margin-bottom: 2mm;
+    }
+    
+    .passport-header .country {
+        font-size: 11pt;
+        font-weight: bold;
+        color: #1e3c72;
+        letter-spacing: 1px;
+    }
+    
+    .passport-header .ministry {
+        font-size: 8pt;
+        color: #333;
+        margin-top: 1mm;
+    }
+    
+    .passport-header .direction {
+        font-size: 7pt;
+        color: #666;
+        margin-top: 0.5mm;
+    }
+    
+    .passport-title {
+        text-align: center;
+        font-size: 10pt;
+        font-weight: bold;
+        color: #1e3c72;
+        background: #fff;
+        display: inline-block;
+        padding: 1mm 6mm;
+        border-radius: 3mm;
+        margin: 1mm 0;
+        letter-spacing: 2px;
+    }
+    
+    .passport-body {
+        display: flex;
+        gap: 3mm;
+        align-items: flex-start;
+    }
+    
+    .photo-section {
+        width: 25mm;
+        flex-shrink: 0;
+    }
+    
+    .photo-placeholder {
+        width: 25mm;
+        height: 32mm;
+        background: #fff;
+        border: 1px solid #999;
+        border-radius: 2mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        font-size: 7pt;
+        text-align: center;
+        overflow: hidden;
+    }
+    
+    .photo-placeholder img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .info-section {
+        flex: 1;
+        font-size: 7.5pt;
+    }
+    
+    .info-row {
+        display: flex;
+        margin-bottom: 1.2mm;
+        padding-bottom: 0.8mm;
+        border-bottom: 0.3px dashed #ccc;
+    }
+    
+    .info-label {
+        width: 30mm;
+        color: #555;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+    
+    .info-value {
+        color: #000;
+        font-weight: bold;
+        flex: 1;
+    }
+    
+    .passport-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-top: 2mm;
+        padding-top: 2mm;
+        border-top: 1px solid #1e3c72;
+    }
+    
+    .qr-section img {
+        width: 22mm;
+        height: 22mm;
+        border: 1px solid #999;
+        border-radius: 1mm;
+        background: #fff;
+        padding: 0.5mm;
+    }
+    
+    .signature-section {
+        text-align: center;
+        font-size: 7pt;
+        color: #333;
+    }
+    
+    .signature-line {
+        border-top: 1px solid #333;
+        width: 40mm;
+        margin: 6mm auto 1mm;
+    }
+    
+    .ref-number {
+        font-family: 'Courier New', monospace;
+        font-size: 7pt;
+        color: #1e3c72;
+        font-weight: bold;
+        letter-spacing: 1px;
+        text-align: center;
+        margin-top: 1mm;
+    }
+    
+    .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-30deg);
+        font-size: 60pt;
+        color: rgba(30, 60, 114, 0.05);
+        font-weight: bold;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    @media print {
+        body { margin: 0; padding: 0; }
+        .passport-card { 
+            box-shadow: none;
+            page-break-after: avoid;
+        }
+    }
+</style>
+
+<div class="passport-card">
+    <div class="watermark">PASSPORT</div>
+    
+    <!-- Header -->
+    <div class="passport-header">
+        <div class="country">الجمهورية العربية</div>
+        <div class="ministry">وزارة الداخلية</div>
+        <div class="direction">المديرية العامة للجنسية والجوازات</div>
+    </div>
+    
+    <div style="text-align: center;">
+        <div class="passport-title">جواز سفر</div>
+    </div>
+    
+    <!-- Body -->
+    <div class="passport-body">
+        
+        <!-- Photo -->
+        <div class="photo-section">
+            <div class="photo-placeholder">
+                {% if doc.photo %}
+                    <img src="{{ doc.photo }}" alt="Photo">
+                {% else %}
+                    <div>
+                        📷<br>صورة<br>شخصية
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Info -->
+        <div class="info-section">
+            <div class="info-row">
+                <div class="info-label">الاسم الكامل:</div>
+                <div class="info-value">{{ doc.applicant_name or '' }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">الرقم الوطني:</div>
+                <div class="info-value">{{ doc.national_id or '' }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">تاريخ الميلاد:</div>
+                <div class="info-value">
+                    {% if doc.date_of_birth %}
+                        {{ frappe.utils.format_date(doc.date_of_birth, "dd-MM-yyyy") }}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">الجنس:</div>
+                <div class="info-value">
+                    {% if doc.gender == 'Male' %}ذكر{% else %}أنثى{% endif %}
+                </div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">نوع الجواز:</div>
+                <div class="info-value">{{ doc.passport_type or 'Normal' }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">الرقم المرجعي:</div>
+                <div class="info-value">{{ doc.reference_number or '' }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">تاريخ الإصدار:</div>
+                <div class="info-value">
+                    {{ frappe.utils.format_date(frappe.utils.today(), "dd-MM-yyyy") }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="passport-footer">
+        <div class="qr-section">
+            {% if doc.qr_data %}
+                <img src="{{ doc.qr_data }}" alt="QR Code">
+            {% endif %}
+        </div>
+        
+        <div class="signature-section">
+            <div>توقيع الموظف المختص</div>
+            <div class="signature-line"></div>
+            <div class="ref-number">{{ doc.reference_number or '' }}</div>
+        </div>
+    </div>
+</div>

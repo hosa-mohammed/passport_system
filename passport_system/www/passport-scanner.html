@@ -1,0 +1,396 @@
+{% extends "templates/web.html" %}
+
+{% block title %}ماسح QR - نظام الجوازات{% endblock %}
+
+{% block page_content %}
+
+<style>
+    .scanner-container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 0 20px;
+        font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+        direction: rtl;
+    }
+    .scanner-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .scanner-header h1 { margin: 0 0 10px 0; font-size: 24px; }
+    .scanner-header p { margin: 0; opacity: 0.9; }
+    
+    .scanner-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .scanner-search-box { display: flex; gap: 10px; }
+    .scanner-search-box input {
+        flex: 1;
+        padding: 15px 20px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 18px;
+        font-family: monospace;
+        background: #fff;
+    }
+    .scanner-search-box input:focus {
+        outline: none;
+        border-color: #2a5298;
+    }
+    .scanner-btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+    .scanner-btn-search { background: #2a5298; color: white; }
+    .scanner-btn-search:hover { background: #1e3c72; }
+    
+    .scanner-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .scanner-info-item {
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    .scanner-info-item label {
+        display: block;
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 4px;
+    }
+    .scanner-info-item .value { font-size: 16px; font-weight: 600; color: #333; }
+    
+    .scanner-status-badge {
+        display: inline-block;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    .scanner-status-Pending { background: #fff3cd; color: #856404; }
+    .scanner-status-Verified { background: #d1ecf1; color: #0c5460; }
+    .scanner-status-Approved { background: #d4edda; color: #155724; }
+    .scanner-status-Rejected { background: #f8d7da; color: #721c24; }
+    .scanner-status-Printed { background: #cce5ff; color: #004085; }
+    
+    .scanner-qr-preview { text-align: center; margin: 20px 0; }
+    .scanner-qr-preview img {
+        max-width: 200px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        background: #fff;
+    }
+    
+    .scanner-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 25px;
+        flex-wrap: wrap;
+    }
+    .scanner-btn-verify { background: #17a2b8; color: white; padding: 15px 40px; }
+    .scanner-btn-verify:hover { background: #138496; }
+    .scanner-btn-approve { background: #28a745; color: white; padding: 15px 40px; }
+    .scanner-btn-approve:hover { background: #218838; }
+    .scanner-btn-reject { background: #dc3545; color: white; padding: 15px 40px; }
+    .scanner-btn-reject:hover { background: #c82333; }
+    .scanner-btn-print { background: #007bff; color: white; padding: 15px 40px; }
+    .scanner-btn-print:hover { background: #0056b3; }
+    
+    .scanner-hidden { display: none !important; }
+    .scanner-error-box {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+        text-align: center;
+        border: 1px solid #f5c6cb;
+    }
+    .scanner-success-toast {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #28a745;
+        color: white;
+        padding: 15px 40px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        font-weight: 600;
+    }
+    .scanner-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #2a5298;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: scanner-spin 1s linear infinite;
+        margin: 20px auto;
+    }
+    @keyframes scanner-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .scanner-rejection-box {
+        background: #f8d7da;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+
+<div class="scanner-container">
+
+    <div class="scanner-header">
+        <h1>🛂 ماسح QR - نظام الجوازات</h1>
+        <p>ادخل الرقم المرجعي أو امسح QR للعميل</p>
+    </div>
+
+    <!-- مربع البحث -->
+    <div class="scanner-card">
+        <div class="scanner-search-box">
+            <input 
+                type="text" 
+                id="ref-input" 
+                placeholder="مثال: PA-2026-00013"
+                autocomplete="off"
+            >
+            <button class="scanner-btn scanner-btn-search" onclick="searchPassport()">🔍 بحث</button>
+        </div>
+    </div>
+
+    <!-- منطقة الخطأ -->
+    <div id="error-box" class="scanner-error-box scanner-hidden"></div>
+
+    <!-- منطقة التحميل -->
+    <div id="loading" class="scanner-hidden">
+        <div class="scanner-spinner"></div>
+    </div>
+
+    <!-- نتيجة البحث -->
+    <div id="result" class="scanner-hidden">
+        <div class="scanner-card">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #333;">📄 تفاصيل الطلب</h2>
+                <span id="status-badge" class="scanner-status-badge"></span>
+            </div>
+            
+            <div class="scanner-info-grid">
+                <div class="scanner-info-item">
+                    <label>الرقم المرجعي</label>
+                    <div class="value" id="info-ref"></div>
+                </div>
+                <div class="scanner-info-item">
+                    <label>الاسم الكامل</label>
+                    <div class="value" id="info-name"></div>
+                </div>
+                <div class="scanner-info-item">
+                    <label>الرقم الوطني</label>
+                    <div class="value" id="info-national"></div>
+                </div>
+                <div class="scanner-info-item">
+                    <label>تاريخ الميلاد</label>
+                    <div class="value" id="info-dob"></div>
+                </div>
+                <div class="scanner-info-item">
+                    <label>الجنس</label>
+                    <div class="value" id="info-gender"></div>
+                </div>
+                <div class="scanner-info-item">
+                    <label>رقم الهاتف</label>
+                    <div class="value" id="info-phone"></div>
+                </div>
+                <div class="scanner-info-item">
+                    <label>البريد الإلكتروني</label>
+                    <div class="value" id="info-email"></div>
+                </div>
+                <div class="scanner-info-item">
+                    <label>نوع الجواز</label>
+                    <div class="value" id="info-type"></div>
+                </div>
+            </div>
+
+            <div id="rejection-box" class="scanner-rejection-box scanner-hidden">
+                <strong>سبب الرفض:</strong> <span id="info-rejection"></span>
+            </div>
+            
+            <div class="scanner-qr-preview">
+                <img id="info-qr" src="" alt="QR Code">
+            </div>
+
+            <div class="scanner-actions" id="actions-area">
+                <!-- الأزرار تُضاف ديناميكياً -->
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ==================== البحث ====================
+function searchPassport() {
+    let ref = document.getElementById('ref-input').value.trim();
+    if (!ref) {
+        showError('الرجاء إدخال الرقم المرجعي');
+        return;
+    }
+    
+    hideError();
+    hideResult();
+    showLoading();
+    
+    frappe.call({
+        method: 'passport_system.api.get_passport_by_ref',
+        args: { reference_number: ref },
+        callback: function(r) {
+            hideLoading();
+            if (r.message) {
+                showResult(r.message);
+            } else {
+                showError('لم يتم العثور على طلب بهذا الرقم المرجعي');
+            }
+        },
+        error: function(err) {
+            hideLoading();
+            showError('خطأ في الاتصال: ' + (err.message || JSON.stringify(err)));
+        }
+    });
+}
+
+// عند الضغط على Enter
+document.addEventListener('DOMContentLoaded', function() {
+    let input = document.getElementById('ref-input');
+    if (input) {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchPassport();
+        });
+    }
+});
+
+// ==================== عرض النتيجة ====================
+function showResult(doc) {
+    document.getElementById('info-ref').textContent = doc.reference_number || '';
+    document.getElementById('info-name').textContent = doc.applicant_name || '';
+    document.getElementById('info-national').textContent = doc.national_id || '';
+    document.getElementById('info-dob').textContent = doc.date_of_birth || '';
+    document.getElementById('info-gender').textContent = doc.gender === 'Male' ? 'ذكر' : 'أنثى';
+    document.getElementById('info-phone').textContent = doc.phone || '-';
+    document.getElementById('info-email').textContent = doc.email || '-';
+    document.getElementById('info-type').textContent = doc.passport_type || '';
+    document.getElementById('info-qr').src = doc.qr_data || '';
+    
+    // شارة الحالة
+    let badge = document.getElementById('status-badge');
+    badge.className = 'scanner-status-badge scanner-status-' + doc.status;
+    badge.textContent = doc.status;
+    
+    // سبب الرفض
+    if (doc.status === 'Rejected' && doc.rejection_reason) {
+        document.getElementById('rejection-box').classList.remove('scanner-hidden');
+        document.getElementById('info-rejection').textContent = doc.rejection_reason;
+    } else {
+        document.getElementById('rejection-box').classList.add('scanner-hidden');
+    }
+    
+    buildActions(doc);
+    document.getElementById('result').classList.remove('scanner-hidden');
+}
+
+function buildActions(doc) {
+    let area = document.getElementById('actions-area');
+    area.innerHTML = '';
+    
+    if (doc.status === 'Pending') {
+        area.innerHTML = `
+            <button class="scanner-btn scanner-btn-verify" onclick="doAction('${doc.name}', 'Verify')">✅ تحقق (Verify)</button>
+            <button class="scanner-btn scanner-btn-reject" onclick="doAction('${doc.name}', 'Reject')">❌ رفض (Reject)</button>
+        `;
+    } else if (doc.status === 'Verified') {
+        area.innerHTML = `
+            <button class="scanner-btn scanner-btn-approve" onclick="doAction('${doc.name}', 'Approve')">✔️ موافقة (Approve)</button>
+            <button class="scanner-btn scanner-btn-reject" onclick="doAction('${doc.name}', 'Reject')">❌ رفض (Reject)</button>
+        `;
+    } else if (doc.status === 'Approved') {
+        area.innerHTML = `
+            <button class="scanner-btn scanner-btn-print" onclick="doAction('${doc.name}', 'Mark as Printed')">🖨️ تم الطباعة</button>
+        `;
+    } else if (doc.status === 'Rejected') {
+        area.innerHTML = `<p style="color: #721c24; font-weight: 600;">تم رفض هذا الطلب</p>`;
+    } else if (doc.status === 'Printed') {
+        area.innerHTML = `<p style="color: #004085; font-weight: 600;">✅ تمت طباعة الجواز</p>`;
+    }
+}
+
+// ==================== تنفيذ Workflow Action ====================
+function doAction(docName, action) {
+    if (!confirm('تأكيد تنفيذ: ' + action + '؟')) return;
+    
+    showLoading();
+    
+    frappe.call({
+        method: 'passport_system.api.process_workflow_action',
+        args: {
+            doc_name: docName,
+            action: action,
+        },
+        callback: function(r) {
+            hideLoading();
+            if (r.message && r.message.success) {
+                showToast('✅ تم التحديث بنجاح');
+                setTimeout(searchPassport, 800);
+            } else {
+                showError('فشل التنفيذ: ' + JSON.stringify(r));
+            }
+        },
+        error: function(err) {
+            hideLoading();
+            showError('خطأ: ' + (err.message || JSON.stringify(err)));
+        },
+    });
+}
+
+// ==================== أدوات مساعدة ====================
+function showLoading() { document.getElementById('loading').classList.remove('scanner-hidden'); }
+function hideLoading() { document.getElementById('loading').classList.add('scanner-hidden'); }
+function hideResult() { document.getElementById('result').classList.add('scanner-hidden'); }
+function showError(msg) {
+    let box = document.getElementById('error-box');
+    box.textContent = '⚠️ ' + msg;
+    box.classList.remove('scanner-hidden');
+    setTimeout(() => box.classList.add('scanner-hidden'), 6000);
+}
+function hideError() { document.getElementById('error-box').classList.add('scanner-hidden'); }
+function showToast(msg) {
+    let t = document.createElement('div');
+    t.className = 'scanner-success-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+}
+</script>
+
+{% endblock %}
